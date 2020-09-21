@@ -162,6 +162,18 @@ public:
     return DTraits.isNodeHidden(Node);
   }
 
+   bool isNodeHidden(std::unique_ptr<typename std::remove_cv<NodeRef>::type> const &Node) {
+    return isNodeHidden(Node.get());
+  }
+
+  void writeNode(NodeRef const *Node) {
+    writeNode(*Node);
+  }
+
+  void writeNode(std::unique_ptr<typename std::remove_cv<NodeRef>::type> const &Node) {
+    writeNode(Node.get());
+  }
+
   void writeNode(NodeRef Node) {
     std::string NodeAttributes = DTraits.getNodeAttributes(Node, G);
 

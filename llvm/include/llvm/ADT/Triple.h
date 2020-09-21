@@ -150,6 +150,14 @@ public:
     CSR,
     Myriad,
     AMD,
+    // FIPAC ->
+    FIPAC,
+    FIPAC_FEND,
+    FIPAC_BB,
+    FIPAC_EMULATION,
+    FIPAC_EMULATION_FEND,
+    FIPAC_EMULATION_BB,
+    // <- FIPAC
     Mesa,
     SUSE,
     OpenEmbedded,

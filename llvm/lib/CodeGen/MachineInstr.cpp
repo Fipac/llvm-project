@@ -119,6 +119,7 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MCInstrDesc &tid,
     : MCID(&tid), debugLoc(std::move(dl)) {
   assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
 
+  MD.type = CfiMIMetadata::INVALID; // FIPAC
   // Reserve space for the expected number of operands.
   if (unsigned NumOps = MCID->getNumOperands() +
     MCID->getNumImplicitDefs() + MCID->getNumImplicitUses()) {
@@ -138,6 +139,9 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
 
   CapOperands = OperandCapacity::get(MI.getNumOperands());
   Operands = MF.allocateOperandArray(CapOperands);
+  // IAIK -->
+  MD = MI.MD;
+  // <-- IAIK
 
   // Copy operands.
   for (const MachineOperand &MO : MI.operands())

@@ -67,6 +67,11 @@ public:
 
   /// Process end of an instruction.
   virtual void endInstruction() = 0;
+
+  // FIPAC ->
+  /// Process end of a machine basic block
+  virtual void emitBasicBlockEnd(const MachineBasicBlock &MBB, const MCSymbol *sym) {}
+  // <- FIPAC
 };
 } // End of namespace llvm
 

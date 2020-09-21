@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../../CodeGen/AsmPrinter/CFIMetadataHandler.h"
 #include "AArch64.h"
 #include "AArch64MCInstLower.h"
 #include "AArch64MachineFunctionInfo.h"
@@ -64,6 +65,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
 
+extern cl::opt<bool> insertPACFI; // IAIK
+
 namespace {
 
 class AArch64AsmPrinter : public AsmPrinter {
@@ -77,6 +80,21 @@ public:
         SM(*this) {}
 
   StringRef getPassName() const override { return "AArch64 Assembly Printer"; }
+
+  // --> IAIK
+  bool doInitialization(Module &M) override {
+    if (insertPACFI) {
+      CFIMetadataHandler<AArch64FunctionInfo> *handler =
+          new CFIMetadataHandler<AArch64FunctionInfo>(this, &M);
+      Handlers.push_back(HandlerInfo(
+          std::unique_ptr<CFIMetadataHandler<AArch64FunctionInfo>>(
+              handler),
+          "CFI Metadata emission", "CFI", "CFI Metadata emission", "CFI"));
+    }
+
+    return AsmPrinter::doInitialization(M);
+  }
+  // <-- IAIK
 
   /// Wrapper for MCInstLowering.lowerOperand() for the
   /// tblgen'erated pseudo lowering.

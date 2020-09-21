@@ -173,6 +173,14 @@ StringRef Triple::getVendorTypeName(VendorType Kind) {
   case PC: return "pc";
   case SCEI: return "scei";
   case SUSE: return "suse";
+  // FIPAC -->
+  case FIPAC: return "fipac";
+  case FIPAC_FEND: return "fipac_fend";
+  case FIPAC_BB: return "fipac_bb";
+  case FIPAC_EMULATION: return "fipac_emulation";
+  case FIPAC_EMULATION_FEND: return "fipac_emulation_fend";
+  case FIPAC_EMULATION_BB: return "fipac_emulation_bb";
+  // <-- FIPAC
   }
 
   llvm_unreachable("Invalid VendorType!");
@@ -482,6 +490,14 @@ static Triple::VendorType parseVendor(StringRef VendorName) {
     .Case("mesa", Triple::Mesa)
     .Case("suse", Triple::SUSE)
     .Case("oe", Triple::OpenEmbedded)
+    // FIPAC -->
+    .Case("fipac", Triple::FIPAC)
+    .Case("fipac_fend", Triple::FIPAC_FEND)
+    .Case("fipac_bb", Triple::FIPAC_BB)
+    .Case("fipac_emulation", Triple::FIPAC_EMULATION)
+    .Case("fipac_emulation_fend", Triple::FIPAC_EMULATION_FEND)
+    .Case("fipac_emulation_bb", Triple::FIPAC_EMULATION_BB)
+    // <-- FIPAC
     .Default(Triple::UnknownVendor);
 }
 

@@ -53,6 +53,33 @@ class TargetInstrInfo;
 class TargetRegisterClass;
 class TargetRegisterInfo;
 
+// IAIK -->
+struct CfiMIMetadata {
+  enum Type {
+    INVALID = 0,
+    DEFINITE_CALL,
+    FUNC_RETURN,
+    CALL_PATCH,
+    ICALL_PATCH,
+    STATE_UPDATE,
+    STATE_PATCH,
+    BRANCH_OVER_PATCH,
+    CFI_CHECK,
+    BRANCH,
+    COND_BRANCH,
+    MBB_STATISTIC,
+  };
+
+  MachineInstr* Inst;
+  Type type = INVALID;
+  uint32_t true_value;
+  uint32_t false_value;
+  uint32_t nr_mbbs;
+  StringRef CallTarget;
+  Type getType() const { return type; }
+};
+// <-- IAIK
+
 //===----------------------------------------------------------------------===//
 /// Representation of each machine instruction.
 ///
@@ -107,6 +134,60 @@ public:
     NoFPExcept   = 1 << 14,             // Instruction does not raise
                                         // floatint-point exceptions.
   };
+
+
+  // FIPAC -->
+  // CFI Metadata accessors for this MachineInstruction
+  CfiMIMetadata MD;
+  void storeDefiniteCall(StringRef CallTarget) {
+    MD.CallTarget = CallTarget;
+    MD.type = CfiMIMetadata::DEFINITE_CALL;
+  }
+
+  void storeReturn() {
+    MD.type = CfiMIMetadata::FUNC_RETURN;
+  }
+
+  void storeCallPatch(StringRef CallTarget) {
+    MD.CallTarget = CallTarget;
+    MD.type = CfiMIMetadata::CALL_PATCH;
+  }
+
+  void storeIcallPatch() {
+    MD.type = CfiMIMetadata::ICALL_PATCH;
+  }
+
+  void storeStateUpdate() {
+    MD.type = CfiMIMetadata::STATE_UPDATE;
+  }
+
+  void storeStatePatch() {
+    MD.type = CfiMIMetadata::STATE_PATCH;
+  }
+
+  void storeBranchOverPatch() {
+    MD.type = CfiMIMetadata::BRANCH_OVER_PATCH;
+  }
+
+  void storeCfiCheck() {
+    MD.type = CfiMIMetadata::CFI_CHECK;
+  }
+
+  void storeNrMBBs(uint32_t NrMbbs) {
+    MD.type = CfiMIMetadata::MBB_STATISTIC;
+    MD.nr_mbbs = NrMbbs;
+  }
+
+  void storeBranch() {
+    MD.type = CfiMIMetadata::BRANCH;
+  }
+
+  void storeConditionalBranch() {
+    MD.type = CfiMIMetadata::COND_BRANCH;
+  }
+
+  std::vector<MachineBasicBlock*> predecessors;
+  // <-- FIPAC
 
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.

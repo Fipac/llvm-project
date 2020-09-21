@@ -37,10 +37,9 @@ namespace llvm {
   private:
     // A comparing class for comparing weighted edges.
     struct EdgeWeightCompare {
-      static bool getBlockSize(const T *X) {
-        const BasicBlock *BB = dyn_cast_or_null<BasicBlock>(X);
-        return BB ? BB->size() : 0;
-      }
+      static size_t getBlockSize(const T *X) {
+        return X->size();
+       }
 
       bool operator()(EdgeWeight X, EdgeWeight Y) const {
         if (X.second > Y.second) return true;

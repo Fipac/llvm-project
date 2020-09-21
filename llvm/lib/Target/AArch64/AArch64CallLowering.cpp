@@ -48,6 +48,8 @@
 
 using namespace llvm;
 
+extern cl::opt<bool> insertPACFI; // IAIK
+
 AArch64CallLowering::AArch64CallLowering(const AArch64TargetLowering &TLI)
   : CallLowering(&TLI) {}
 
@@ -939,6 +941,12 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // If we can lower as a tail call, do that instead.
   bool CanTailCallOpt =
       isEligibleForTailCallOptimization(MIRBuilder, Info, InArgs, OutArgs);
+
+  // IAIK -->
+  // We cannot do Tail calls for CFI
+  if (insertPACFI)
+    CanTailCallOpt = false;
+  // <-- IAIK
 
   // We must emit a tail call if we have musttail.
   if (Info.IsMustTailCall && !CanTailCallOpt) {

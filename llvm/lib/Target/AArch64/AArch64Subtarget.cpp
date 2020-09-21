@@ -33,6 +33,8 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_TARGET_DESC
 #include "AArch64GenSubtargetInfo.inc"
 
+extern cl::opt<bool> insertPACFI; // IAIK
+
 static cl::opt<bool>
 EnableEarlyIfConvert("aarch64-early-ifcvt", cl::desc("Enable the early if "
                      "converter pass"), cl::init(true), cl::Hidden);
@@ -178,6 +180,14 @@ AArch64Subtarget::AArch64Subtarget(const Triple &TT, const std::string &CPU,
       TargetTriple(TT), FrameLowering(),
       InstrInfo(initializeSubtargetDependencies(FS, CPU)), TSInfo(),
       TLInfo(TM, *this) {
+  // IAIK -->
+  // Reserve X28 for PAC CFI State
+  if (insertPACFI) {
+    ReserveXRegister.set(27);
+    ReserveXRegister.set(28);
+  }
+  // <-- IAIK
+
   if (AArch64::isX18ReservedByDefault(TT))
     ReserveXRegister.set(18);
 

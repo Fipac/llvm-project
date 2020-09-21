@@ -5727,6 +5727,42 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  // FIPAC -->
+  auto Vendor = RawTriple.getVendor();
+  // Add fipac flag if necessary
+  if(Vendor == llvm::Triple::FIPAC ||
+     Vendor == llvm::Triple::FIPAC_FEND ||
+     Vendor == llvm::Triple::FIPAC_BB ||
+     Vendor == llvm::Triple::FIPAC_EMULATION ||
+     Vendor == llvm::Triple::FIPAC_EMULATION_FEND ||
+     Vendor == llvm::Triple::FIPAC_EMULATION_BB) {
+    CmdArgs.push_back("-mllvm");
+    CmdArgs.push_back("-insert-pac-cfi");
+  }
+
+  // Add emulation flag if necessary
+  if(Vendor == llvm::Triple::FIPAC_EMULATION ||
+     Vendor == llvm::Triple::FIPAC_EMULATION_FEND ||
+     Vendor == llvm::Triple::FIPAC_EMULATION_BB) {
+    CmdArgs.push_back("-mllvm");
+    CmdArgs.push_back("-insert-eor-pac");
+  }
+  // Configure FIPAC checking policy
+  switch(Vendor) {
+    default: break;
+    case llvm::Triple::FIPAC_FEND:
+    case llvm::Triple::FIPAC_EMULATION_FEND:
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back("-insert-cfi-check=fend");
+      break;
+    case llvm::Triple::FIPAC_BB:
+    case llvm::Triple::FIPAC_EMULATION_BB:
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back("-insert-cfi-check=bb");
+      break;
+  }
+  // <-- FIPAC
+
   if (!Args.hasFlag(options::OPT_Qy, options::OPT_Qn, true))
     CmdArgs.push_back("-Qn");
 

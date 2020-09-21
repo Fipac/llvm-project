@@ -1,0 +1,55 @@
+# recursively clone all submodules
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+.conan_template: &gitlabci_conan
+  image: nioshd/ubuntu-cppdev:latest
+  tags:
+    - lab11
+  variables:
+    CCACHE_COMPILERCHECK: "%compiler% -v"
+    CONAN_CMAKE_GENERATOR: Ninja
+    CONAN_CPU_COUNT: 4
+    CTEST_OUTPUT_ON_FAILURE: 1
+    GIT_SUBMODULE_STRATEGY: recursive
+  cache:
+    paths:
+    - _ccache/
+  before_script:
+    # Use gold as system linker.
+    - update-alternatives --set ld /usr/bin/ld.gold
+    # Enable ccache.
+    - export PATH="/usr/lib/ccache:$PATH"
+    - export CCACHE_DIR=${PWD}/_ccache
+    - ccache -s
+    # Setup the conan profile and remotes.
+    - conan profile new --detect default
+    - conan profile update settings.compiler.libcxx=libstdc++11 default
+    - conan remote add conantools https://extgit.iaik.tugraz.at/api/v4/projects/2136/packages/conan
+    - conan remote add gitlab https://extgit.iaik.tugraz.at/api/v4/packages/conan
+    # Generate settings.yml file (side effect of conan info) and update the clang version and libc settings.
+    - conan info conanfile_bare_tc.py
+
+build:
+  <<: *gitlabci_conan
+  stage: build
+  script:
+    # Setup the source, build and install directories.
+    - export SRC_DIR="${PWD}"
+    - export BUILD_DIR="${PWD}/_build"
+    - export INSTALL_DIR="${PWD}/_install"
+    # Build and install the toolchain.
+    - mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
+    - conan install "${SRC_DIR}/conanfile_bare_tc.py" "fipac+llvm-project/testing"
+    - conan build "${SRC_DIR}/conanfile_bare_tc.py" --source-folder="${SRC_DIR}" --package-folder="${INSTALL_DIR}"
+    - conan package "${SRC_DIR}/conanfile_bare_tc.py" --source-folder="${SRC_DIR}" --package-folder="${INSTALL_DIR}"
+    # Create a conan package from the locally built install directory.
+    - conan export-pkg "${SRC_DIR}/conanfile_bare_tc.py" "fipac+llvm-project/testing" --package-folder="${INSTALL_DIR}"
+  after_script:
+    - CONAN_LOGIN_USERNAME=ci_user CONAN_PASSWORD=${CI_JOB_TOKEN} conan upload --force $(conan inspect conanfile_bare_tc.py --raw name)/$(conan inspect conanfile_bare_tc.py --raw version)@fipac+llvm-project/testing --all --remote=gitlab
+  artifacts:
+    name: toolchain
+    expire_in: 1 week
+    paths:
+    - _install/
+

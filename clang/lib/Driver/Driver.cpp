@@ -1081,6 +1081,19 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
     A->claim();
     PrefixDirs.push_back(A->getValue(0));
   }
+
+  // FIPAC -->
+  // If undefined, setup the default sysroot based on the target triple.
+  if (SysRoot.empty()) {
+    std::string Dir = std::string(llvm::sys::path::parent_path(ClangExecutable));
+    // Prepend InstalledDir if SysRoot is relative
+    SmallString<128> P(Dir);
+    llvm::sys::path::append(P, "..", TargetTriple);
+    if (llvm::sys::fs::is_directory(P))
+      SysRoot = std::string(P);
+  }
+  // <-- FIPAC
+
   if (const Arg *A = Args.getLastArg(options::OPT__sysroot_EQ))
     SysRoot = A->getValue();
   if (const Arg *A = Args.getLastArg(options::OPT__dyld_prefix_EQ))

@@ -118,6 +118,8 @@ EnableOptimizeLogicalImm("aarch64-enable-logical-imm", cl::Hidden,
                                   "optimization"),
                          cl::init(true));
 
+extern cl::opt<bool> insertPACFI; // IAIK
+
 /// Value type used for condition codes.
 static const MVT MVT_CC = MVT::i32;
 
@@ -4064,6 +4066,12 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
   bool TailCallOpt = MF.getTarget().Options.GuaranteedTailCallOpt;
   bool IsSibCall = false;
+
+  // IAIK -->
+  // Disable Tail calls for PAC CFI protection
+  if (insertPACFI)
+    IsTailCall = false;
+  // <-- IAIK
 
   if (IsTailCall) {
     // Check if it's really possible to do a tail call.

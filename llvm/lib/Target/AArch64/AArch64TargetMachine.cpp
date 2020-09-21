@@ -159,6 +159,10 @@ static cl::opt<bool>
                         cl::desc("Enable the AAcrh64 branch target pass"),
                         cl::init(true));
 
+cl::opt<bool> insertPACFI("insert-pac-cfi",
+    cl::desc("Enables PAC CFI insertion."),
+    cl::init(false));
+
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAArch64Target() {
   // Register the target.
   RegisterTargetMachine<AArch64leTargetMachine> X(getTheAArch64leTarget());
@@ -595,6 +599,10 @@ void AArch64PassConfig::addPreRegAlloc() {
     // be register coalescer friendly.
     addPass(&PeepholeOptimizerID);
   }
+  // IAIK -->
+  if (insertPACFI)
+    addPass(createPacCFIPass());
+  // <-- IAIK
 }
 
 void AArch64PassConfig::addPostRegAlloc() {
@@ -639,6 +647,10 @@ void AArch64PassConfig::addPreEmitPass() {
   if (EnableA53Fix835769)
     addPass(createAArch64A53Fix835769());
 
+  // IAIK -->
+  if (insertPACFI)
+    addPass(createPacFunctionHeaderPass());
+  // <--
   if (EnableBranchTargets)
     addPass(createAArch64BranchTargetsPass());
 
@@ -661,3 +673,4 @@ void AArch64PassConfig::addPreEmitPass() {
   // SVE bundles move prefixes with destructive operations.
   addPass(createUnpackMachineBundles(nullptr));
 }
+

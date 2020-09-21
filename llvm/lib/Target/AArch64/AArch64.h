@@ -28,6 +28,8 @@ class FunctionPass;
 class InstructionSelector;
 class MachineFunctionPass;
 
+FunctionPass *createPacCFIPass(); // IAIK
+FunctionPass *createPacFunctionHeaderPass(); // IAIK
 FunctionPass *createAArch64DeadRegisterDefinitions();
 FunctionPass *createAArch64RedundantCopyEliminationPass();
 FunctionPass *createAArch64CondBrTuning();

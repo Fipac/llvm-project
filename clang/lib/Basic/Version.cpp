@@ -36,10 +36,14 @@ std::string getClangRepositoryPath() {
 }
 
 std::string getLLVMRepositoryPath() {
+#if defined(LLVM_REPOSITORY_STRING)
+  return LLVM_REPOSITORY_STRING;
+#else
 #ifdef LLVM_REPOSITORY
   return LLVM_REPOSITORY;
 #else
   return "";
+#endif
 #endif
 }
 

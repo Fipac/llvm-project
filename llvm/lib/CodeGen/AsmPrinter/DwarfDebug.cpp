@@ -1833,6 +1833,14 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   }
 
   DebugHandlerBase::beginInstruction(MI);
+  // --> FIPAC
+  // Only perorm the this function if there is debug information available.
+  // This check is necessray because we now unconditionally call this function
+  // even for cases where there is no debug information available in order to
+  // call the CFIMetadataHandler.
+  if (!MMI->hasDebugInfo())
+    return;
+  // <-- FIPAC
   assert(CurMI);
 
   if (NoDebug)

@@ -1074,7 +1074,19 @@ void AsmPrinter::emitFunctionBody() {
   // Emit target-specific gunk before the function body.
   emitFunctionBodyStart();
 
-  bool ShouldPrintDebugScopes = MMI->hasDebugInfo();
+  // --> FIPAC
+  // bool ShouldPrintDebugScopes = MMI->hasDebugInfo();
+  // Setting ShouldPrintDebugScopes to true is needed to unconditionally call
+  // the beginInstruction() visitor. The CFIMetadataHandler uses
+  // beginInstruction() to add identify metadata and write that to a debug
+  // ELF section, which is needed for the CFI post-processing tool. However,
+  // this raises one problem in DwarfDebug.cpp, which implements a second
+  // handler for beginInstruction(). Since there is no debug information
+  // available this would fail. Thus, the entry of DwarfDebug::beginInstruction
+  // checks if debug info is available and if not it does an early return.
+  bool ShouldPrintDebugScopes = true;
+  // bool ShouldPrintDebugScopes = MMI->hasDebugInfo();
+  // <-- FIPAC
 
   if (isVerbose()) {
     // Get MachineDominatorTree or compute it on the fly if it's unavailable
@@ -1184,11 +1196,16 @@ void AsmPrinter::emitFunctionBody() {
     // containing the entry basic block as the end symbol for that section is
     // CurrentFnEnd).
     MCSymbol *CurrentBBEnd = nullptr;
-    if ((MAI->hasDotTypeDotSizeDirective() && MF->hasBBLabels()) ||
-        (MBB.isEndSection() && !MBB.sameSection(&MF->front()))) {
-      CurrentBBEnd = OutContext.createTempSymbol();
-      OutStreamer->emitLabel(CurrentBBEnd);
-    }
+    // FIPAC ->
+    // Always emit MBB End label for FIPAC
+    // if ((MAI->hasDotTypeDotSizeDirective() && MF->hasBBLabels()) ||
+    //     (MBB.isEndSection() && !MBB.sameSection(&MF->front()))) {
+    //   CurrentBBEnd = OutContext.createTempSymbol();
+    //   OutStreamer->emitLabel(CurrentBBEnd);
+    // }
+    CurrentBBEnd = OutContext.createTempSymbol();
+    OutStreamer->emitLabel(CurrentBBEnd);
+    // <- FIPAC
 
     // Helper for emitting the size directive associated with a basic block
     // symbol.
@@ -1214,6 +1231,16 @@ void AsmPrinter::emitFunctionBody() {
       }
     }
     emitBasicBlockEnd(MBB);
+    // FIPAC ->
+    if (ShouldPrintDebugScopes) {
+      for (const HandlerInfo &HI : Handlers) {
+        NamedRegionTimer T(HI.TimerName, HI.TimerDescription,
+                            HI.TimerGroupName, HI.TimerGroupDescription,
+                            TimePassesIsEnabled);
+        HI.Handler->emitBasicBlockEnd(MBB, CurrentBBEnd);
+      }
+    }
+    // <- FIPAC
   }
 
   EmittedInsts += NumInstsInFunction;

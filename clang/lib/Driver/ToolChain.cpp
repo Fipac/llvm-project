@@ -382,6 +382,13 @@ StringRef ToolChain::getOSLibName() const {
 
 std::string ToolChain::getCompilerRTPath() const {
   SmallString<128> Path(getDriver().ResourceDir);
+
+  // FIPAC -->
+  // In the FIPAC toolchain, we put the compiler rt into the triple folder
+  // because we have different compiler_rts for the same architecture
+  llvm::sys::path::append(Path, Triple.getTriple());
+  // <-- FIPAC
+
   if (Triple.isOSUnknown()) {
     llvm::sys::path::append(Path, "lib");
   } else {
